@@ -298,7 +298,8 @@ const SEED_EVENTS = [
   { id: 'seed-estetica-jessica-1606', text: 'Estética — Jessica Siqueira Concept', date: '2026-06-16', time: '08:30', note: 'A confirmar' },
   { id: 'seed-chaiane-1706', text: 'Horário com Chaiane Bressan', date: '2026-06-17', time: '08:40' },
   { id: 'seed-estetica-jessica-2306', text: 'Estética — Jessica Siqueira Concept', date: '2026-06-23', time: '08:30', note: 'A confirmar' },
-  { id: 'seed-laser-facial-1007', text: 'Laser facial — Dra. Raquel', date: '2026-07-10', time: '16:00', note: 'Pagar R$100 de entrada p/ manter' }
+  { id: 'seed-laser-facial-1007', text: 'Laser facial — Dra. Raquel', date: '2026-07-10', time: '16:00', note: 'Pagar R$100 de entrada p/ manter' },
+  { id: 'seed-eco-1409', text: 'Ecocardiograma — Dra. Geovana (Hosp. Unimed Itajaí)', date: '2026-09-14', time: '14:20', note: 'Chegar 30min antes · João Bauer 218, Itajaí' }
 ];
 
 const defaultState = { tasks: [], habits: [], events: [], goals: [], theme: 'light', seedRemoved: [], seeded: false };
@@ -349,15 +350,15 @@ auth.onAuthStateChanged(user => {
 function startSync(uid) {
   docRef = db.collection('users').doc(uid);
   docRef.get().then(snap => {
-    if (!snap.exists) {
-      const initial = { ...structuredClone(defaultState), events: structuredClone(SEED_EVENTS), seeded: true };
-      return docRef.set(initial);
-    } else if (!snap.data().seeded) {
-      const data = snap.data();
-      const events = Array.isArray(data.events) ? data.events : [];
-      SEED_EVENTS.forEach(ev => { if (!events.some(e => e.id === ev.id)) events.push(ev); });
-      return docRef.set({ events, seeded: true }, { merge: true });
-    }
+    const data = snap.exists ? snap.data() : structuredClone(defaultState);
+    const events = Array.isArray(data.events) ? data.events : [];
+    const removed = Array.isArray(data.seedRemoved) ? data.seedRemoved : [];
+    let changed = !snap.exists;
+    // Adiciona apenas compromissos novos (que ainda não existem e não foram excluídos).
+    SEED_EVENTS.forEach(ev => {
+      if (!events.some(e => e.id === ev.id) && !removed.includes(ev.id)) { events.push(ev); changed = true; }
+    });
+    if (changed) { data.events = events; return docRef.set(data, { merge: true }); }
   }).catch(e => toast('Erro ao carregar: ' + e.code, true));
 
   unsub = docRef.onSnapshot(snap => {
