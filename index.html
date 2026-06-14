@@ -163,6 +163,11 @@
   .mini-add input { flex: 1; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; color: var(--text); font-size: 13px; outline: none; }
   .mini-add button { background: var(--primary-soft); color: var(--primary-deep); border: none; border-radius: 10px; padding: 0 14px; font-size: 18px; cursor: pointer; font-weight: 800; }
 
+  .rotina-days { display: flex; gap: 6px; margin-bottom: 16px; }
+  .rday { flex: 1; background: var(--surface); border: 1.5px solid var(--border); color: var(--text-dim); border-radius: 12px; padding: 10px 0; font-size: 14px; font-weight: 800; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .rday.today { border-color: var(--gold); color: var(--gold); }
+  .rday.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+
   .day-group { margin-bottom: 20px; }
   .day-label { font-size: 12px; font-weight: 800; color: var(--primary-deep); margin: 0 4px 9px; text-transform: uppercase; letter-spacing: 0.8px; }
   .event-time { font-size: 13px; font-weight: 800; color: var(--gold); flex-shrink: 0; width: 52px; }
@@ -234,7 +239,8 @@
 
     <section class="section" id="tab-rotina">
       <div class="section-title">Minha Rotina</div>
-      <div class="section-sub">De segunda a sexta · o que é de hoje fica em destaque ♡</div>
+      <div class="section-sub">Toque no dia da semana pra ver a rotina dele ♡</div>
+      <div id="rotinaDays" class="rotina-days"></div>
       <div id="rotinaList"></div>
     </section>
 
@@ -250,6 +256,16 @@
         <button class="add-btn" onclick="addEvent()">+</button>
       </div>
       <div id="eventList"></div>
+    </section>
+
+    <section class="section" id="tab-compras">
+      <div class="section-title">Lista de Compras</div>
+      <div class="section-sub">Anote o que falta · toque pra marcar no carrinho 🛒</div>
+      <div class="add-box">
+        <input type="text" id="shopInput" placeholder="Adicionar item (ex: Leite)..." onkeydown="if(event.key==='Enter')addShopping()">
+        <button class="add-btn" onclick="addShopping()">+</button>
+      </div>
+      <div id="shopList"></div>
     </section>
 
     <section class="section" id="tab-goals">
@@ -268,6 +284,7 @@
     <button class="nav-btn" data-tab="habits" onclick="switchTab('habits')"><span class="ico">🌷</span>Hábitos</button>
     <button class="nav-btn" data-tab="rotina" onclick="switchTab('rotina')"><span class="ico">⏰</span>Rotina</button>
     <button class="nav-btn active" data-tab="events" onclick="switchTab('events')"><span class="ico">🗓️</span>Agenda</button>
+    <button class="nav-btn" data-tab="compras" onclick="switchTab('compras')"><span class="ico">🛒</span>Compras</button>
     <button class="nav-btn" data-tab="goals" onclick="switchTab('goals')"><span class="ico">✨</span>Metas</button>
   </nav>
 </div>
@@ -315,23 +332,27 @@ const SEED_EVENTS = [
 ];
 
 // Rotina fixa de segunda a sexta (mantida no código; é só me pedir pra ajustar qualquer horário).
+const WD = [1, 2, 3, 4, 5]; // dias de semana
 const ROUTINE = [
   // ☀️ Manhã
-  { period: 'Manhã', time: '06:00', label: 'Acordar e levantar o Felipe' },
-  { period: 'Manhã', time: '07:00', label: 'Levar o Felipe na escola' },
-  { period: 'Manhã', time: '07:50', label: 'Voltar pra casa' },
-  { period: 'Manhã', time: '08:00', label: '☕ Café, chimarrão e arrumar as camas' },
-  { period: 'Manhã', time: '08:15', label: '🙏 Momento devocional (oração e leitura)' },
-  { period: 'Manhã', time: '08:30', label: '💬 Mensagem motivacional em vendas' },
-  { period: 'Manhã', time: '08:45', label: '🧺 Pôr uma roupa pra lavar + organização rápida da casa' },
-  { period: 'Manhã', time: '09:00', label: 'Reunião com a equipe Confiança', days: [1,3,5], badge: 'Seg·Qua·Sex' },
+  { period: 'Manhã', time: '06:00', label: 'Acordar e levantar o Felipe', days: WD },
+  { period: 'Manhã', time: '07:00', label: 'Levar o Felipe na escola', days: WD },
+  { period: 'Manhã', time: '07:50', label: 'Voltar pra casa', days: WD },
+  { period: 'Manhã', time: '08:00', label: 'Acordar (fim de semana)', days: [6, 0] },
+  { period: 'Manhã', time: '08:15', label: '☕ Café, chimarrão e arrumar as camas' },
+  { period: 'Manhã', time: '08:30', label: '🙏 Momento devocional (oração e leitura)' },
+  { period: 'Manhã', time: '08:45', label: '💬 Mensagem motivacional em vendas', days: WD },
+  { period: 'Manhã', time: '09:00', label: '🧺 Pôr uma roupa pra lavar + organização rápida', days: WD },
+  { period: 'Manhã', time: '09:00', label: 'Reunião com a equipe Confiança', days: [1, 3, 5], badge: 'Seg·Qua·Sex' },
+  { period: 'Manhã', time: '09:00', label: '🛒 Mercado / compras da semana', days: [6], badge: 'Sáb' },
+  { period: 'Manhã', time: '10:30', label: '📦 Organização geral da casa + calçados', days: [6], badge: 'Sáb' },
   { period: 'Manhã', time: '11:00', label: 'Soneca da Fernanda + preparar o almoço' },
-  { period: 'Manhã', time: '11:40', label: 'Buscar o Felipe na escola' },
+  { period: 'Manhã', time: '11:40', label: 'Buscar o Felipe na escola', days: WD },
   // 🌤️ Tarde
-  { period: 'Tarde', time: '12:00', label: 'Almoço com o Felipe e a Fernanda' },
+  { period: 'Tarde', time: '12:00', label: 'Almoço em família' },
   { period: 'Tarde', time: '13:00', label: '🍽️ Lavar a louça e organizar a cozinha' },
-  { period: 'Tarde', time: '13:30', label: 'Trabalhar pra Confiança (demandas + ajustes no sistema)' },
-  { period: 'Tarde', time: '14:00', label: 'Felipe no reforço (até 15h)', days: [1,2], badge: 'Seg·Ter' },
+  { period: 'Tarde', time: '13:30', label: 'Trabalhar pra Confiança (demandas + ajustes no sistema)', days: WD },
+  { period: 'Tarde', time: '14:00', label: 'Felipe no reforço (até 15h)', days: [1, 2], badge: 'Seg·Ter' },
   { period: 'Tarde', time: '15:30', label: '🍳 Faxina foco: COZINHA (armários, geladeira, microondas/forno, café)', days: [1], badge: 'Seg' },
   { period: 'Tarde', time: '15:30', label: '🛏️ Faxina foco: QUARTOS (trocar roupa de cama, toalhas, pó, gavetas)', days: [2], badge: 'Ter' },
   { period: 'Tarde', time: '15:30', label: '🚿 Faxina foco: BANHEIROS (espelhos, box, vaso e pia, papel reserva)', days: [3], badge: 'Qua' },
@@ -340,11 +361,12 @@ const ROUTINE = [
   { period: 'Tarde', time: '16:00', label: '📚 Tarefa do Felipe: conferir/fazer junto e revisar o que ele estudou na escola' },
   // 🌙 Noite
   { period: 'Noite', time: '18:00', label: 'Preparar o jantar' },
+  { period: 'Noite', time: '19:00', label: '⛪ Igreja', days: [0], badge: 'Dom' },
   { period: 'Noite', time: '20:00', label: '🗑️ Retirar o lixo + organização final dos cômodos' },
   { period: 'Noite', time: '21:00', label: '🎯 Meta: crianças dormindo' }
 ];
 
-const defaultState = { tasks: [], habits: [], events: [], goals: [], theme: 'light', seedRemoved: [], seeded: false };
+const defaultState = { tasks: [], habits: [], events: [], goals: [], shopping: [], theme: 'light', seedRemoved: [], seeded: false };
 let state = structuredClone(defaultState);
 let docRef = null;
 let unsub = null;
@@ -447,35 +469,75 @@ function toast(msg, isErr) {
   toastTimer = setTimeout(() => t.className = 'toast', 2200);
 }
 
-function renderAll() { renderHeader(); renderTasks(); renderHabits(); renderRotina(); renderEvents(); renderGoals(); }
+function renderAll() { renderHeader(); renderTasks(); renderHabits(); renderRotina(); renderEvents(); renderShopping(); renderGoals(); }
 
+// ===== ROTINA =====
+let rotinaDay = new Date().getDay(); // dia selecionado (0=Dom ... 6=Sáb)
+function setRotinaDay(d) { rotinaDay = d; renderRotina(); }
+function rotinaApplies(r, day) { return !r.days || r.days.includes(day); }
 function renderRotina() {
   const el = document.getElementById('rotinaList');
-  if (!el) return;
-  const today = new Date().getDay(); // 0=Dom ... 6=Sáb
-  const fimDeSemana = (today === 0 || today === 6);
+  const sel = document.getElementById('rotinaDays');
+  if (!el || !sel) return;
+  const today = new Date().getDay();
+  const dnames = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+  sel.innerHTML = [0, 1, 2, 3, 4, 5, 6].map(d =>
+    `<button class="rday ${d === rotinaDay ? 'on' : ''} ${d === today ? 'today' : ''}" onclick="setRotinaDay(${d})">${dnames[d]}</button>`
+  ).join('');
+
   const periodos = ['Manhã', 'Tarde', 'Noite'];
   const emojis = { 'Manhã': '🌅', 'Tarde': '🌤️', 'Noite': '🌙' };
   let html = '';
-  if (fimDeSemana) {
-    html += '<div class="card" style="text-align:center;">🌸 Hoje é fim de semana — sua rotina abaixo é de segunda a sexta. Aproveite o descanso!</div>';
-  }
   periodos.forEach(p => {
-    const itens = ROUTINE.filter(r => r.period === p);
+    const itens = ROUTINE.filter(r => r.period === p && rotinaApplies(r, rotinaDay))
+      .sort((a, b) => a.time.localeCompare(b.time));
     if (!itens.length) return;
     html += `<div class="day-label">${emojis[p]} ${p}</div>`;
     itens.forEach(r => {
-      const ehHoje = !fimDeSemana && (!r.days || r.days.includes(today));
-      const diaEspecifico = r.days && !r.days.includes(today);
-      const style = (diaEspecifico || fimDeSemana) ? 'opacity:.55;' : '';
-      const destaque = ehHoje ? 'border-left:4px solid var(--primary);' : '';
-      html += `<div class="card" style="${style}${destaque}">
+      const destaque = (rotinaDay === today) ? 'border-left:4px solid var(--primary);' : '';
+      html += `<div class="card" style="${destaque}">
         <div class="card-row">
           <div class="event-time">${r.time}</div>
           <div class="item-text">${esc(r.label)}${r.badge ? `<span class="pill media">${esc(r.badge)}</span>` : ''}</div>
         </div></div>`;
     });
   });
+  if (!html) html = '<div class="empty"><span class="empty-emoji">🌸</span>Dia livre! Aproveite.</div>';
+  el.innerHTML = html;
+}
+
+// ===== LISTA DE COMPRAS =====
+function addShopping() {
+  const inp = document.getElementById('shopInput');
+  const text = inp.value.trim(); if (!text) return;
+  if (!state.shopping) state.shopping = [];
+  state.shopping.push({ id: uid(), text, done: false });
+  inp.value = ''; save();
+}
+function toggleShopping(id) {
+  const s = state.shopping.find(x => x.id === id);
+  if (s) { s.done = !s.done; save(); }
+}
+function delShopping(id) { state.shopping = (state.shopping || []).filter(x => x.id !== id); save(); }
+function clearBoughtShopping() {
+  state.shopping = (state.shopping || []).filter(x => !x.done);
+  toast('Itens comprados removidos 🛒'); save();
+}
+function renderShopping() {
+  const el = document.getElementById('shopList');
+  if (!el) return;
+  const list = state.shopping || [];
+  if (!list.length) { el.innerHTML = '<div class="empty"><span class="empty-emoji">🛒</span>Lista vazia.<br>Adicione o que falta em casa!</div>'; return; }
+  const sorted = [...list].sort((a, b) => a.done - b.done);
+  let html = sorted.map(s => `
+    <div class="card"><div class="card-row">
+      <div class="check ${s.done ? 'done' : ''}" onclick="toggleShopping('${s.id}')">✓</div>
+      <div class="item-text ${s.done ? 'done' : ''}">${esc(s.text)}</div>
+      <button class="del-btn" onclick="delShopping('${s.id}')">×</button>
+    </div></div>`).join('');
+  if (sorted.some(s => s.done)) {
+    html += `<button onclick="clearBoughtShopping()" style="width:100%;margin-top:8px;background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;">🧹 Limpar itens já comprados</button>`;
+  }
   el.innerHTML = html;
 }
 
