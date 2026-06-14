@@ -356,7 +356,6 @@
   </nav>
 </div>
 
-<div id="petals"></div>
 <div class="toast" id="toast"></div>
 
 <!-- Firebase SDK -->
@@ -848,11 +847,7 @@ function createPetals() {
   }
 }
 
-let petalTimer;
-window.addEventListener('resize', () => { clearTimeout(petalTimer); petalTimer = setTimeout(createPetals, 300); });
-
 renderVerse();
-createPetals();
 </script>
 </body>
 </html>
