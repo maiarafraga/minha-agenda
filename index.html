@@ -139,8 +139,8 @@
   header::before { content: none; }
   header::after { content: none; }
   .header-deco { position: absolute; z-index: 0; pointer-events: none; }
-  .deco-tl { top: 0; left: 0; width: 300px; max-width: 46%; opacity: 0.92; transform: scaleX(-1); }
-  .deco-br { top: 0; right: 0; width: 300px; max-width: 46%; opacity: 0.92; }
+  .deco-tl { top: 0; left: 0; width: 330px; max-width: 48%; opacity: 0.95; transform: scaleX(-1); }
+  .deco-br { top: 0; right: 0; width: 330px; max-width: 48%; opacity: 0.95; }
   .greeting { color: #fff; font-size: 14px; font-weight: 700; position: relative; z-index: 1; text-align: center; text-shadow: 0 1px 5px rgba(140,70,90,0.5); }
   .date-big { font-family: var(--serif); color: #fff; font-size: 27px; font-weight: 700; margin-top: 2px; letter-spacing: 0.3px; position: relative; z-index: 1; text-align: center; text-shadow: 0 1px 5px rgba(140,70,90,0.5); }
   .header-stats { display: flex; gap: 22px; margin-top: 18px; position: relative; z-index: 1; justify-content: center; }
@@ -160,8 +160,8 @@
   .section.active { display: block; animation: fade 0.3s ease; }
   @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-  .section-title { font-family: var(--serif); font-size: 26px; font-weight: 700; margin: 4px 4px 4px; letter-spacing: 0.3px; color: var(--primary-deep); }
-  .section-title::before { content: '❀ '; color: var(--gold); font-size: 0.7em; vertical-align: 2px; }
+  .section-title { font-family: var(--script); font-size: 36px; font-weight: 400; margin: 2px 4px -2px; letter-spacing: 0.5px; color: var(--primary-deep); line-height: 1.1; }
+  .section-title::before { content: '❀ '; font-family: var(--sans); color: var(--gold); font-size: 0.42em; vertical-align: 6px; }
   .section-sub { color: var(--text-dim); font-size: 13px; margin: 0 4px 18px; }
 
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 15px; margin-bottom: 11px; box-shadow: var(--shadow); }
@@ -231,6 +231,20 @@
   .toast { position: fixed; bottom: 104px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--primary); color: #fff; padding: 13px 24px; border-radius: 30px; font-weight: 700; font-size: 14px; opacity: 0; pointer-events: none; transition: all 0.3s; z-index: 2000; box-shadow: 0 8px 24px rgba(194,100,126,0.45); }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   .toast.err { background: var(--red); }
+
+  /* Pétalas caindo */
+  #petals { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 40; }
+  .petal { position: absolute; top: -28px; background: radial-gradient(circle at 32% 28%, #FBD2DD, #E6A0B4); border-radius: 150% 0 150% 0; opacity: 0; will-change: transform; animation: petalFall linear infinite; }
+  @keyframes petalFall {
+    0%   { transform: translateY(-28px) translateX(0) rotate(0deg);   opacity: 0; }
+    12%  { opacity: 0.55; }
+    88%  { opacity: 0.55; }
+    100% { transform: translateY(104vh) translateX(50px) rotate(440deg); opacity: 0; }
+  }
+
+  /* Frase do dia */
+  .verse-card { background: linear-gradient(135deg, var(--primary-soft), #FFFFFF); border: 1px solid var(--border); border-radius: var(--radius); padding: 15px 18px; margin: 2px 4px 20px; box-shadow: var(--shadow); text-align: center; font-family: var(--serif); font-style: italic; font-size: 17px; line-height: 1.45; color: var(--primary-deep); cursor: pointer; }
+  .verse-card small { display: block; font-family: var(--sans); font-style: normal; font-size: 10px; color: var(--text-dim); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.6px; }
 </style>
 </head>
 <body>
@@ -267,6 +281,7 @@
   </header>
 
   <div class="container">
+    <div class="verse-card" id="verseCard" onclick="nextVerse()"></div>
     <section class="section" id="tab-tasks">
       <div class="section-title">Tarefas de hoje</div>
       <div class="section-sub">O que precisa ser feito ♡</div>
@@ -340,6 +355,7 @@
   </nav>
 </div>
 
+<div id="petals"></div>
 <div class="toast" id="toast"></div>
 
 <!-- Firebase SDK -->
@@ -759,6 +775,68 @@ function applyTheme() {
   document.body.classList.toggle('dark', state.theme === 'dark');
   document.getElementById('themeBtn').textContent = state.theme === 'dark' ? '☀️' : '🌙';
 }
+
+// ===== FRASE / VERSÍCULO DO DIA =====
+const VERSES = [
+  'Entrega o teu caminho ao Senhor; confia nele, e ele tudo fará. — Salmos 37:5',
+  'Tudo posso naquele que me fortalece. — Filipenses 4:13',
+  'O Senhor é o meu pastor; nada me faltará. — Salmos 23:1',
+  'Não temas, porque eu sou contigo. — Isaías 41:10',
+  'Lança o teu cuidado sobre o Senhor, e ele te susterá. — Salmos 55:22',
+  'O choro pode durar uma noite, mas a alegria vem pela manhã. — Salmos 30:5',
+  'Confia no Senhor de todo o teu coração. — Provérbios 3:5',
+  'Ainda que eu ande pelo vale da sombra, não temerei mal algum. — Salmos 23:4',
+  'A alegria do Senhor é a vossa força. — Neemias 8:10',
+  'Buscai primeiro o Reino de Deus, e tudo vos será acrescentado. — Mateus 6:33',
+  'O amor é paciente, o amor é bondoso. — 1 Coríntios 13:4',
+  'Deus é o nosso refúgio e fortaleza, socorro bem presente. — Salmos 46:1',
+  'Aquietai-vos e sabei que eu sou Deus. — Salmos 46:10',
+  'Tudo tem o seu tempo determinado. — Eclesiastes 3:1',
+  'Bem-aventurados os que choram, porque serão consolados. — Mateus 5:4',
+  'As misericórdias do Senhor se renovam a cada manhã. — Lamentações 3:23',
+  'O Senhor pelejará por vós, e vós vos calareis. — Êxodo 14:14',
+  'Esforça-te e tem bom ânimo. — Josué 1:9',
+  'Tu és preciosa aos meus olhos e eu te amo. — Isaías 43:4',
+  'Cada dia tem o seu próprio cuidado: faça o seu melhor hoje. 💕',
+  'Você é mais forte do que imagina, mãe. Um passo de cada vez. 🌸',
+  'Respire. Você está dando conta — e com muito amor. 🌷',
+  'Cuidar dos seus é lindo; cuidar de você também é necessário. ✨',
+  'O lar mais bonito é aquele cheio de amor — e o seu transborda. 🏡💗'
+];
+let verseOffset = 0;
+function dayIndex() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  return Math.floor((now - start) / 86400000);
+}
+function renderVerse() {
+  const el = document.getElementById('verseCard');
+  if (!el) return;
+  const v = VERSES[(dayIndex() + verseOffset) % VERSES.length];
+  el.innerHTML = '🌸 ' + esc(v) + '<small>toque para ver outra ✿</small>';
+}
+function nextVerse() { verseOffset++; renderVerse(); }
+
+// ===== PÉTALAS CAINDO =====
+function createPetals() {
+  const c = document.getElementById('petals');
+  if (!c || c.childElementCount) return;
+  const N = 12;
+  for (let i = 0; i < N; i++) {
+    const p = document.createElement('div');
+    p.className = 'petal';
+    const size = 9 + (i % 4) * 3;            // 9..18px
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = ((i * 8.3 + 4) % 100) + '%';
+    p.style.animationDuration = (9 + (i % 5) * 2.4) + 's';
+    p.style.animationDelay = (-i * 1.6) + 's';
+    c.appendChild(p);
+  }
+}
+
+renderVerse();
+createPetals();
 </script>
 </body>
 </html>
