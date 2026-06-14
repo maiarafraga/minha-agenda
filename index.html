@@ -223,13 +223,19 @@
     </section>
 
     <section class="section" id="tab-habits">
-      <div class="section-title">Hábitos & Rotina</div>
+      <div class="section-title">Hábitos</div>
       <div class="section-sub">Marque cada dia que você cumpriu ♡</div>
       <div class="add-box">
         <input type="text" id="habitInput" placeholder="Novo hábito (ex: Beber água)..." onkeydown="if(event.key==='Enter')addHabit()">
         <button class="add-btn" onclick="addHabit()">+</button>
       </div>
       <div id="habitList"></div>
+    </section>
+
+    <section class="section" id="tab-rotina">
+      <div class="section-title">Minha Rotina</div>
+      <div class="section-sub">De segunda a sexta · o que é de hoje fica em destaque ♡</div>
+      <div id="rotinaList"></div>
     </section>
 
     <section class="section active" id="tab-events">
@@ -260,6 +266,7 @@
   <nav>
     <button class="nav-btn" data-tab="tasks" onclick="switchTab('tasks')"><span class="ico">🌼</span>Tarefas</button>
     <button class="nav-btn" data-tab="habits" onclick="switchTab('habits')"><span class="ico">🌷</span>Hábitos</button>
+    <button class="nav-btn" data-tab="rotina" onclick="switchTab('rotina')"><span class="ico">⏰</span>Rotina</button>
     <button class="nav-btn active" data-tab="events" onclick="switchTab('events')"><span class="ico">🗓️</span>Agenda</button>
     <button class="nav-btn" data-tab="goals" onclick="switchTab('goals')"><span class="ico">✨</span>Metas</button>
   </nav>
@@ -305,6 +312,25 @@ const SEED_EVENTS = [
   { id: 'seed-exame-fernanda-1906', text: 'Exames da Fernanda — Unimed Itapema 1', date: '2026-06-19', time: '07:15', note: 'Chegar 07:15 (exame 07:30) · Núcleo Itapema 1. PREPARO: sem jejum; levar amostra de FEZES (coletada em casa, refrigerada 2-8°C, em até 12h) + 1ª urina da manhã. Coleta do ferro só até 11h. Documento com foto.' },
   { id: 'seed-lembrete-maiara-1406', text: '🔔 Lembrete: amanhã seus exames (10:55)', date: '2026-06-14', time: '', note: 'Se quiser fazer jejum de 12h, evite comer depois das ~22h de hoje. Separar documento com foto. Local: Itapema 2 (Meia Praia).' },
   { id: 'seed-lembrete-filhos-1806', text: '🔔 Lembrete: amanhã exames do Felipe e da Fernanda', date: '2026-06-18', time: '', note: 'FELIPE em JEJUM (sem comer depois das ~22h de hoje), exame 06:15. FERNANDA: coletar amostra de FEZES hoje à noite e refrigerar; pegar a 1ª urina amanhã cedo; exame 07:15. Levar documentos. Local: Itapema 1.' }
+];
+
+// Rotina fixa de segunda a sexta (mantida no código; é só me pedir pra ajustar qualquer horário).
+const ROUTINE = [
+  { period: 'Manhã', time: '06:00', label: 'Acordar e levantar o Felipe' },
+  { period: 'Manhã', time: '07:00', label: 'Levar o Felipe na escola' },
+  { period: 'Manhã', time: '07:50', label: 'Voltar pra casa' },
+  { period: 'Manhã', time: '08:00', label: 'Organizar a casa · passar o café · fazer chimarrão' },
+  { period: 'Manhã', time: '08:15', label: '🙏 Momento devocional (oração e leitura)' },
+  { period: 'Manhã', time: '08:30', label: '💬 Enviar mensagem motivacional em vendas' },
+  { period: 'Manhã', time: '09:00', label: 'Reunião com a equipe Confiança', days: [1,3,5], badge: 'Seg·Qua·Sex' },
+  { period: 'Manhã', time: '11:00', label: 'Soneca da Fernanda (parar tudo) + preparar o almoço' },
+  { period: 'Manhã', time: '11:40', label: 'Buscar o Felipe na escola' },
+  { period: 'Tarde', time: '12:00', label: 'Almoço com o Felipe e a Fernanda' },
+  { period: 'Tarde', time: '13:00', label: 'Lavar a louça · organizar a casa' },
+  { period: 'Tarde', time: '13:30', label: 'Trabalhar pra Confiança (demandas + ajustes no sistema)' },
+  { period: 'Tarde', time: '14:00', label: 'Felipe no reforço (até 15h)', days: [1,2], badge: 'Seg·Ter' },
+  { period: 'Noite', time: '18:00', label: 'Preparar o jantar e organizar tudo' },
+  { period: 'Noite', time: '21:00', label: '🎯 Meta: crianças dormindo' }
 ];
 
 const defaultState = { tasks: [], habits: [], events: [], goals: [], theme: 'light', seedRemoved: [], seeded: false };
@@ -410,7 +436,37 @@ function toast(msg, isErr) {
   toastTimer = setTimeout(() => t.className = 'toast', 2200);
 }
 
-function renderAll() { renderHeader(); renderTasks(); renderHabits(); renderEvents(); renderGoals(); }
+function renderAll() { renderHeader(); renderTasks(); renderHabits(); renderRotina(); renderEvents(); renderGoals(); }
+
+function renderRotina() {
+  const el = document.getElementById('rotinaList');
+  if (!el) return;
+  const today = new Date().getDay(); // 0=Dom ... 6=Sáb
+  const fimDeSemana = (today === 0 || today === 6);
+  const periodos = ['Manhã', 'Tarde', 'Noite'];
+  const emojis = { 'Manhã': '🌅', 'Tarde': '🌤️', 'Noite': '🌙' };
+  let html = '';
+  if (fimDeSemana) {
+    html += '<div class="card" style="text-align:center;">🌸 Hoje é fim de semana — sua rotina abaixo é de segunda a sexta. Aproveite o descanso!</div>';
+  }
+  periodos.forEach(p => {
+    const itens = ROUTINE.filter(r => r.period === p);
+    if (!itens.length) return;
+    html += `<div class="day-label">${emojis[p]} ${p}</div>`;
+    itens.forEach(r => {
+      const ehHoje = !fimDeSemana && (!r.days || r.days.includes(today));
+      const diaEspecifico = r.days && !r.days.includes(today);
+      const style = (diaEspecifico || fimDeSemana) ? 'opacity:.55;' : '';
+      const destaque = ehHoje ? 'border-left:4px solid var(--primary);' : '';
+      html += `<div class="card" style="${style}${destaque}">
+        <div class="card-row">
+          <div class="event-time">${r.time}</div>
+          <div class="item-text">${esc(r.label)}${r.badge ? `<span class="pill media">${esc(r.badge)}</span>` : ''}</div>
+        </div></div>`;
+    });
+  });
+  el.innerHTML = html;
+}
 
 function renderHeader() {
   const now = new Date();
