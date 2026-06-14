@@ -239,7 +239,7 @@
     0%   { transform: translateY(-28px) translateX(0) rotate(0deg);   opacity: 0; }
     12%  { opacity: 0.55; }
     88%  { opacity: 0.55; }
-    100% { transform: translateY(104vh) translateX(50px) rotate(440deg); opacity: 0; }
+    100% { transform: translateY(104vh) translateX(var(--drift, 16px)) rotate(440deg); opacity: 0; }
   }
 
   /* Frase do dia */
@@ -820,7 +820,12 @@ function nextVerse() { verseOffset++; renderVerse(); }
 // ===== PÉTALAS CAINDO =====
 function createPetals() {
   const c = document.getElementById('petals');
-  if (!c || c.childElementCount) return;
+  if (!c) return;
+  c.innerHTML = '';
+  const W = window.innerWidth;
+  let gutter = Math.max(0, (W - 672) / 2);   // espaço fora da coluna de conteúdo
+  if (gutter < 26) gutter = 26;              // celular: usa a marginzinha das bordas
+  const usable = Math.max(14, gutter - 6);
   const N = 12;
   for (let i = 0; i < N; i++) {
     const p = document.createElement('div');
@@ -828,12 +833,22 @@ function createPetals() {
     const size = 9 + (i % 4) * 3;            // 9..18px
     p.style.width = size + 'px';
     p.style.height = size + 'px';
-    p.style.left = ((i * 8.3 + 4) % 100) + '%';
+    const off = 3 + ((i * 37) % 100) / 100 * usable;  // posição dentro da lateral
+    if (i % 2 === 1) {                        // lateral direita
+      p.style.left = (W - off - size) + 'px';
+      p.style.setProperty('--drift', '14px');
+    } else {                                  // lateral esquerda
+      p.style.left = off + 'px';
+      p.style.setProperty('--drift', '-14px');
+    }
     p.style.animationDuration = (9 + (i % 5) * 2.4) + 's';
     p.style.animationDelay = (-i * 1.6) + 's';
     c.appendChild(p);
   }
 }
+
+let petalTimer;
+window.addEventListener('resize', () => { clearTimeout(petalTimer); petalTimer = setTimeout(createPetals, 300); });
 
 renderVerse();
 createPetals();
