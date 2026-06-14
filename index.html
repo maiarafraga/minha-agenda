@@ -335,6 +335,16 @@
       <div id="shopList"></div>
     </section>
 
+    <section class="section" id="tab-gratitude">
+      <div class="section-title">Gratidão</div>
+      <div class="section-sub">Registre suas bênçãos e pedidos de oração 🙏</div>
+      <div class="add-box">
+        <input type="text" id="gratInput" placeholder="Hoje sou grata por..." onkeydown="if(event.key==='Enter')addGratitude()">
+        <button class="add-btn" onclick="addGratitude()">+</button>
+      </div>
+      <div id="gratList"></div>
+    </section>
+
     <section class="section" id="tab-goals">
       <div class="section-title">Metas & Sonhos</div>
       <div class="section-sub">Objetivos divididos em passinhos ♡</div>
@@ -352,6 +362,7 @@
     <button class="nav-btn" data-tab="rotina" onclick="switchTab('rotina')"><span class="ico">⏰</span>Rotina</button>
     <button class="nav-btn active" data-tab="events" onclick="switchTab('events')"><span class="ico">🗓️</span>Agenda</button>
     <button class="nav-btn" data-tab="compras" onclick="switchTab('compras')"><span class="ico">🛒</span>Compras</button>
+    <button class="nav-btn" data-tab="gratitude" onclick="switchTab('gratitude')"><span class="ico">🙏</span>Gratidão</button>
     <button class="nav-btn" data-tab="goals" onclick="switchTab('goals')"><span class="ico">✨</span>Metas</button>
   </nav>
 </div>
@@ -433,7 +444,7 @@ const ROUTINE = [
   { period: 'Noite', time: '21:00', label: '🎯 Meta: crianças dormindo' }
 ];
 
-const defaultState = { tasks: [], habits: [], events: [], goals: [], shopping: [], theme: 'light', seedRemoved: [], seeded: false };
+const defaultState = { tasks: [], habits: [], events: [], goals: [], shopping: [], gratitude: [], theme: 'light', seedRemoved: [], seeded: false };
 let state = structuredClone(defaultState);
 let docRef = null;
 let unsub = null;
@@ -536,7 +547,36 @@ function toast(msg, isErr) {
   toastTimer = setTimeout(() => t.className = 'toast', 2200);
 }
 
-function renderAll() { renderHeader(); renderTasks(); renderHabits(); renderRotina(); renderEvents(); renderShopping(); renderGoals(); }
+function renderAll() { renderHeader(); renderTasks(); renderHabits(); renderRotina(); renderEvents(); renderShopping(); renderGratitude(); renderGoals(); }
+
+// ===== GRATIDÃO =====
+function addGratitude() {
+  const inp = document.getElementById('gratInput');
+  const t = inp.value.trim(); if (!t) return;
+  if (!state.gratitude) state.gratitude = [];
+  state.gratitude.push({ id: uid(), text: t, date: todayKey() });
+  inp.value = ''; toast('Gratidão registrada 🙏'); save();
+}
+function delGratitude(id) { state.gratitude = (state.gratitude || []).filter(x => x.id !== id); save(); }
+function renderGratitude() {
+  const el = document.getElementById('gratList');
+  if (!el) return;
+  const list = state.gratitude || [];
+  if (!list.length) { el.innerHTML = '<div class="empty"><span class="empty-emoji">🙏</span>Nenhum registro ainda.<br>Pelo que você é grata hoje?</div>'; return; }
+  const groups = {};
+  list.forEach(g => { (groups[g.date] = groups[g.date] || []).push(g); });
+  const dates = Object.keys(groups).sort().reverse();
+  el.innerHTML = dates.map(d => {
+    const items = groups[d].slice().reverse().map(g => `
+      <div class="card"><div class="card-row">
+        <div style="font-size:18px;flex-shrink:0;">🌸</div>
+        <div class="item-text">${esc(g.text)}</div>
+        <button class="del-btn" onclick="delGratitude('${g.id}')">×</button>
+      </div></div>`).join('');
+    const label = d === todayKey() ? 'HOJE · ' + fmtDate(d) : fmtDate(d);
+    return `<div class="day-group"><div class="day-label">${label}</div>${items}</div>`;
+  }).join('');
+}
 
 // ===== ROTINA =====
 let rotinaDay = new Date().getDay(); // dia selecionado (0=Dom ... 6=Sáb)
