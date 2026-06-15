@@ -409,6 +409,31 @@ const SEED_EVENTS = [
   { id: 'seed-lembrete-filhos-1806', text: '🔔 Lembrete: amanhã exames do Felipe e da Fernanda', date: '2026-06-18', time: '', note: 'FELIPE em JEJUM (sem comer depois das ~22h de hoje), exame 06:15. FERNANDA: coletar amostra de FEZES hoje à noite e refrigerar; pegar a 1ª urina amanhã cedo; exame 07:15. Levar documentos. Local: Itapema 1.' }
 ];
 
+// Ingredientes da semana (cardápio) — entram na Lista de Compras no 1º acesso. Apagar (×) não traz de volta.
+const SEED_SHOPPING = [
+  { id: 'seed-shop-01', text: 'Frango (para assar)', done: false },
+  { id: 'seed-shop-02', text: 'Carne para bife (parmegiana e acebolado)', done: false },
+  { id: 'seed-shop-03', text: 'Carne para strogonoff', done: false },
+  { id: 'seed-shop-04', text: 'Linguiça', done: false },
+  { id: 'seed-shop-05', text: 'Arroz', done: false },
+  { id: 'seed-shop-06', text: 'Feijão', done: false },
+  { id: 'seed-shop-07', text: 'Batata', done: false },
+  { id: 'seed-shop-08', text: 'Brócolis', done: false },
+  { id: 'seed-shop-09', text: 'Cenoura', done: false },
+  { id: 'seed-shop-10', text: 'Tomate', done: false },
+  { id: 'seed-shop-11', text: 'Beterraba', done: false },
+  { id: 'seed-shop-12', text: 'Alface / verduras para salada', done: false },
+  { id: 'seed-shop-13', text: 'Queijo mussarela (parmegiana)', done: false },
+  { id: 'seed-shop-14', text: 'Presunto (parmegiana)', done: false },
+  { id: 'seed-shop-15', text: 'Molho de tomate', done: false },
+  { id: 'seed-shop-16', text: 'Creme de leite (strogonoff)', done: false },
+  { id: 'seed-shop-17', text: 'Batata palha', done: false },
+  { id: 'seed-shop-18', text: 'Ovos', done: false },
+  { id: 'seed-shop-19', text: 'Farinha de rosca', done: false },
+  { id: 'seed-shop-20', text: 'Cebola', done: false },
+  { id: 'seed-shop-21', text: 'Alho', done: false }
+];
+
 // Rotina fixa de segunda a sexta (mantida no código; é só me pedir pra ajustar qualquer horário).
 const WD = [1, 2, 3, 4, 5]; // dias de semana
 const ROUTINE = [
@@ -515,7 +540,11 @@ function startSync(uid) {
         }
       }
     });
-    if (changed) { data.events = events; return docRef.set(data, { merge: true }); }
+    const shopping = Array.isArray(data.shopping) ? data.shopping : [];
+    SEED_SHOPPING.forEach(it => {
+      if (!shopping.some(s => s.id === it.id) && !removed.includes(it.id)) { shopping.push(it); changed = true; }
+    });
+    if (changed) { data.events = events; data.shopping = shopping; return docRef.set(data, { merge: true }); }
   }).catch(e => toast('Erro ao carregar: ' + e.code, true));
 
   unsub = docRef.onSnapshot(snap => {
@@ -631,8 +660,18 @@ function toggleShopping(id) {
   const s = state.shopping.find(x => x.id === id);
   if (s) { s.done = !s.done; save(); }
 }
-function delShopping(id) { state.shopping = (state.shopping || []).filter(x => x.id !== id); save(); }
+function delShopping(id) {
+  if (String(id).indexOf('seed-') === 0) {
+    if (!state.seedRemoved) state.seedRemoved = [];
+    if (!state.seedRemoved.includes(id)) state.seedRemoved.push(id);
+  }
+  state.shopping = (state.shopping || []).filter(x => x.id !== id); save();
+}
 function clearBoughtShopping() {
+  if (!state.seedRemoved) state.seedRemoved = [];
+  (state.shopping || []).filter(x => x.done).forEach(x => {
+    if (String(x.id).indexOf('seed-') === 0 && !state.seedRemoved.includes(x.id)) state.seedRemoved.push(x.id);
+  });
   state.shopping = (state.shopping || []).filter(x => !x.done);
   toast('Itens comprados removidos 🛒'); save();
 }
