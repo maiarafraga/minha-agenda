@@ -1,0 +1,1 @@
+- [QA Agenda Pessoal](project_agenda_pessoal_qa.md) — PWA single-file ~/agenda-deploy/index.html, Firebase, repo público; proteção real = regras Firestore

@@ -233,16 +233,6 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   .toast.err { background: var(--red); }
 
-  /* Pétalas caindo */
-  #petals { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 40; }
-  .petal { position: absolute; top: -28px; background: radial-gradient(circle at 32% 28%, #FBD2DD, #E6A0B4); border-radius: 150% 0 150% 0; opacity: 0; will-change: transform; animation: petalFall linear infinite; }
-  @keyframes petalFall {
-    0%   { transform: translateY(-28px) translateX(0) rotate(0deg);   opacity: 0; }
-    12%  { opacity: 0.55; }
-    88%  { opacity: 0.55; }
-    100% { transform: translateY(104vh) translateX(var(--drift, 16px)) rotate(440deg); opacity: 0; }
-  }
-
   /* Frase do dia */
   .verse-card { background: linear-gradient(135deg, var(--primary-soft), #FFFFFF); border: 1px solid var(--border); border-radius: var(--radius); padding: 15px 18px; margin: 2px 4px 20px; box-shadow: var(--shadow); text-align: center; font-family: var(--serif); font-style: italic; font-size: 17px; line-height: 1.45; color: var(--primary-deep); cursor: pointer; }
   .verse-card small { display: block; font-family: var(--sans); font-style: normal; font-size: 10px; color: var(--text-dim); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.6px; }
@@ -389,6 +379,8 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+// Funciona offline: guarda os dados no aparelho e sincroniza quando a internet voltar
+db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
 
 const DOW = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -901,36 +893,6 @@ function renderVerse() {
   el.innerHTML = '🌸 ' + esc(v) + '<small>toque para ver outra ✿</small>';
 }
 function nextVerse() { verseOffset++; renderVerse(); }
-
-// ===== PÉTALAS CAINDO =====
-function createPetals() {
-  const c = document.getElementById('petals');
-  if (!c) return;
-  c.innerHTML = '';
-  const W = window.innerWidth;
-  let gutter = Math.max(0, (W - 672) / 2);   // espaço fora da coluna de conteúdo
-  if (gutter < 26) gutter = 26;              // celular: usa a marginzinha das bordas
-  const usable = Math.max(14, gutter - 6);
-  const N = 12;
-  for (let i = 0; i < N; i++) {
-    const p = document.createElement('div');
-    p.className = 'petal';
-    const size = 9 + (i % 4) * 3;            // 9..18px
-    p.style.width = size + 'px';
-    p.style.height = size + 'px';
-    const off = 3 + ((i * 37) % 100) / 100 * usable;  // posição dentro da lateral
-    if (i % 2 === 1) {                        // lateral direita
-      p.style.left = (W - off - size) + 'px';
-      p.style.setProperty('--drift', '14px');
-    } else {                                  // lateral esquerda
-      p.style.left = off + 'px';
-      p.style.setProperty('--drift', '-14px');
-    }
-    p.style.animationDuration = (9 + (i % 5) * 2.4) + 's';
-    p.style.animationDelay = (-i * 1.6) + 's';
-    c.appendChild(p);
-  }
-}
 
 renderVerse();
 </script>
