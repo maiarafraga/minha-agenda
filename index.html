@@ -282,10 +282,8 @@
         <button class="add-btn" onclick="addTask()">+</button>
       </div>
       <div id="taskList"></div>
-    </section>
 
-    <section class="section" id="tab-habits">
-      <div class="section-title">Hábitos</div>
+      <div class="section-title" style="margin-top:26px;">Hábitos</div>
       <div class="section-sub">Marque cada dia que você cumpriu ♡</div>
       <div class="add-box">
         <input type="text" id="habitInput" placeholder="Novo hábito (ex: Beber água)..." onkeydown="if(event.key==='Enter')addHabit()">
@@ -325,16 +323,6 @@
       <div id="shopList"></div>
     </section>
 
-    <section class="section" id="tab-gratitude">
-      <div class="section-title">Gratidão</div>
-      <div class="section-sub">Registre suas bênçãos e pedidos de oração 🙏</div>
-      <div class="add-box">
-        <input type="text" id="gratInput" placeholder="Hoje sou grata por..." onkeydown="if(event.key==='Enter')addGratitude()">
-        <button class="add-btn" onclick="addGratitude()">+</button>
-      </div>
-      <div id="gratList"></div>
-    </section>
-
     <section class="section" id="tab-goals">
       <div class="section-title">Metas & Sonhos</div>
       <div class="section-sub">Objetivos divididos em passinhos ♡</div>
@@ -343,16 +331,22 @@
         <button class="add-btn" onclick="addGoal()">+</button>
       </div>
       <div id="goalList"></div>
+
+      <div class="section-title" style="margin-top:26px;">Gratidão</div>
+      <div class="section-sub">Registre suas bênçãos e pedidos de oração 🙏</div>
+      <div class="add-box">
+        <input type="text" id="gratInput" placeholder="Hoje sou grata por..." onkeydown="if(event.key==='Enter')addGratitude()">
+        <button class="add-btn" onclick="addGratitude()">+</button>
+      </div>
+      <div id="gratList"></div>
     </section>
   </div>
 
   <nav>
     <button class="nav-btn" data-tab="tasks" onclick="switchTab('tasks')"><span class="ico">🌼</span>Tarefas</button>
-    <button class="nav-btn" data-tab="habits" onclick="switchTab('habits')"><span class="ico">🌷</span>Hábitos</button>
     <button class="nav-btn" data-tab="rotina" onclick="switchTab('rotina')"><span class="ico">⏰</span>Rotina</button>
     <button class="nav-btn active" data-tab="events" onclick="switchTab('events')"><span class="ico">🗓️</span>Agenda</button>
     <button class="nav-btn" data-tab="compras" onclick="switchTab('compras')"><span class="ico">🛒</span>Compras</button>
-    <button class="nav-btn" data-tab="gratitude" onclick="switchTab('gratitude')"><span class="ico">🙏</span>Gratidão</button>
     <button class="nav-btn" data-tab="goals" onclick="switchTab('goals')"><span class="ico">✨</span>Metas</button>
   </nav>
 </div>
