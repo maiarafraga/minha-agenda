@@ -218,6 +218,9 @@
   .rday.today { border-color: var(--gold); color: var(--gold); }
   .rday.on { background: var(--primary); border-color: var(--primary); color: #fff; }
 
+  .share-btn { width: 100%; background: linear-gradient(135deg, #A7C4A0, #8FB088); color: #fff; border: none; border-radius: 14px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; margin: 2px 0 18px; font-family: inherit; box-shadow: 0 6px 16px rgba(143,176,136,0.35); }
+  .share-btn:active { transform: scale(0.98); }
+
   .day-group { margin-bottom: 20px; }
   .day-label { font-size: 12px; font-weight: 800; color: var(--primary-deep); margin: 0 4px 9px; text-transform: uppercase; letter-spacing: 0.8px; }
   .event-time { font-size: 13px; font-weight: 800; color: var(--gold); flex-shrink: 0; width: 52px; }
@@ -310,6 +313,7 @@
         <input type="text" id="eventInput" placeholder="Descrição do compromisso..." onkeydown="if(event.key==='Enter')addEvent()">
         <button class="add-btn" onclick="addEvent()">+</button>
       </div>
+      <button class="share-btn" onclick="shareWeekSummary()">📤 Enviar resumo da semana pro Eduardo</button>
       <div id="eventList"></div>
     </section>
 
@@ -390,6 +394,7 @@ const SEED_EVENTS = [
   { id: 'seed-laser-facial-1007', text: 'Laser facial — Dra. Raquel', date: '2026-07-10', time: '16:00', note: 'Pagar R$100 de entrada p/ manter' },
   { id: 'seed-eco-1409', text: 'Ecocardiograma — Dra. Geovana (Hosp. Unimed Itajaí)', date: '2026-09-14', time: '14:20', note: 'Chegar 30min antes · João Bauer 218, Itajaí' },
   { id: 'seed-neuro-felipe-1408', text: 'Neuro do Felipe — Dr. Jonatan Alves', date: '2026-08-17', time: '14:30', note: 'REAGENDADO de 14/08 p/ 17/08 (a clínica remarcou). Clínica Curumim, Itajaí. Unimed. Chegar 10 min antes.' },
+  { id: 'seed-estetica-1808', text: 'Estética (pé + cabelo + mão) — Jessica/Regiane', date: '2026-08-18', time: '07:30', note: 'Manhã: pé e cabelo com a Gabe e a Valentina; mão com a Regiane às 9h.' },
   { id: 'seed-cintia-felipe-1808', text: 'Dentista (Felipe) — Dra. Cíntia', date: '2026-08-18', time: '15:15', note: 'Saiu a obturação do dentinho do Felipe. Agendado. Contato 47 99123-1650.' },
   { id: 'seed-gastro-retorno-0510', text: 'Retorno com Dr. Bruno (Gastroclínica Itajaí)', date: '2026-10-05', time: '08:30', note: 'Consulta de retorno. Gastroclínica Itajaí (47 3344-3444). Se vagar algo antes, eles avisam.' },
   { id: 'seed-consulta-fernanda-2209', text: 'Consulta da Fernanda — Dra. Geovana (cardiopediatra)', date: '2026-09-22', time: '10:00', note: 'Clínica Curumim — Av. Ministro Victor Konder, 320, Centro, Itajaí. Unimed. Levar documento com foto OU certidão de nascimento + caderneta de vacinação. Não atrasar.' },
@@ -828,6 +833,34 @@ function renderEvents() {
     const label = date === tk ? 'HOJE · ' + fmtDate(date) : fmtDate(date);
     return `<div class="day-group"><div class="day-label">${label}</div>${items}</div>`;
   }).join('');
+}
+
+// ===== RESUMO DA SEMANA (compartilhar) =====
+function weekSummaryText() {
+  const tk = todayKey();
+  const end = new Date();
+  end.setDate(end.getDate() + 7);
+  const endKey = end.getFullYear() + '-' + String(end.getMonth() + 1).padStart(2, '0') + '-' + String(end.getDate()).padStart(2, '0');
+  const up = (state.events || [])
+    .filter(e => e.date >= tk && e.date <= endKey)
+    .sort((a, b) => (a.date + '.' + (a.time || '99')).localeCompare(b.date + '.' + (b.time || '99')));
+  let t = '🗓️ Resumo da semana da Maiara\n(próximos 7 dias)\n';
+  if (!up.length) { return t + '\nSem compromissos nos próximos 7 dias 🌸'; }
+  let lastDate = '';
+  up.forEach(e => {
+    if (e.date !== lastDate) { t += '\n📅 ' + fmtDate(e.date) + '\n'; lastDate = e.date; }
+    t += '   • ' + (e.time ? e.time + ' — ' : '') + e.text + '\n';
+  });
+  t += '\nFeito com carinho 💛';
+  return t;
+}
+function shareWeekSummary() {
+  const text = weekSummaryText();
+  if (navigator.share) {
+    navigator.share({ title: 'Resumo da semana', text }).catch(() => {});
+  } else {
+    window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(text), '_blank');
+  }
 }
 
 // ===== METAS =====
